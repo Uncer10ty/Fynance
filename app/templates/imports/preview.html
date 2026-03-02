@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Preview Import - Fynance{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <a href="{{ url_for('imports.import_page') }}" class="text-indigo-600 hover:underline">← Back to Import</a>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Preview: {{ filename }}</h1>
+    <p class="text-gray-600">
+        Importing to <strong>{{ account.name }}</strong>
+        {% if detected_format != 'generic' %}
+        • Detected format: <span class="text-indigo-600">{{ detected_format|title }}</span>
+        {% endif %}
+    </p>
+</div>
+
+<!-- Column Mapping -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-4">Column Mapping</h2>
+    <p class="text-gray-600 text-sm mb-4">Verify the column mapping is correct, or adjust as needed:</p>
+    
+    <form method="POST" action="{{ url_for('imports.process_import') }}" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date Column *</label>
+                <select name="date_col" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Select...</option>
+                    {% for col in columns %}
+                    <option value="{{ col }}" {% if column_mapping.get('date_col') == col %}selected{% endif %}>
+                        {{ col }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description Column *</label>
+                <select name="description_col" required class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Select...</option>
+                    {% for col in columns %}
+                    <option value="{{ col }}" {% if column_mapping.get('description_col') == col %}selected{% endif %}>
+                        {{ col }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Amount Column</label>
+                <select name="amount_col" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">None (use debit/credit)</option>
+                    {% for col in columns %}
+                    <option value="{{ col }}" {% if column_mapping.get('amount_col') == col %}selected{% endif %}>
+                        {{ col }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Use if amounts are in a single column</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Debit Column</label>
+                <select name="debit_col" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">None</option>
+                    {% for col in columns %}
+                    <option value="{{ col }}" {% if column_mapping.get('debit_col') == col %}selected{% endif %}>
+                        {{ col }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Money out / payments</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Credit Column</label>
+                <select name="credit_col" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">None</option>
+                    {% for col in columns %}
+                    <option value="{{ col }}" {% if column_mapping.get('credit_col') == col %}selected{% endif %}>
+                        {{ col }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Money in / deposits</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Balance Column</label>
+                <select name="balance_col" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">None</option>
+                    {% for col in columns %}
+                    <option value="{{ col }}" {% if column_mapping.get('balance_col') == col %}selected{% endif %}>
+                        {{ col }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Notes / Action Column</label>
+                <select name="notes_col" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">None</option>
+                    {% for col in columns %}
+                    <option value="{{ col }}" {% if column_mapping.get('notes_col') == col %}selected{% endif %}>
+                        {{ col }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Used as description fallback & stored as notes</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Category Column</label>
+                <select name="category_col" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">None</option>
+                    {% for col in columns %}
+                    <option value="{{ col }}" {% if column_mapping.get('category_col') == col %}selected{% endif %}>
+                        {{ col }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Bank-provided category (e.g., "Interest on Cash")</p>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date Format (optional)</label>
+                <select name="date_format" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <option value="">Auto-detect</option>
+                    <option value="%d/%m/%Y" {% if column_mapping.get('date_format') == '%d/%m/%Y' %}selected{% endif %}>DD/MM/YYYY</option>
+                    <option value="%d-%m-%Y" {% if column_mapping.get('date_format') == '%d-%m-%Y' %}selected{% endif %}>DD-MM-YYYY</option>
+                    <option value="%Y-%m-%d" {% if column_mapping.get('date_format') == '%Y-%m-%d' %}selected{% endif %}>YYYY-MM-DD</option>
+                    <option value="%d %b %Y" {% if column_mapping.get('date_format') == '%d %b %Y' %}selected{% endif %}>DD Mon YYYY</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Exclude Transactions Containing</label>
+                <input type="text" name="exclude_patterns" 
+                       placeholder="e.g., Market buy, Market sell, Dividend"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <p class="text-xs text-gray-500 mt-1">Comma-separated patterns to skip (matched against description/notes)</p>
+            </div>
+        </div>
+        
+        <div class="pt-4 flex space-x-4">
+            <button type="submit" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                Import Transactions
+            </button>
+            <a href="{{ url_for('imports.import_page') }}" 
+               class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Data Preview -->
+<div class="bg-white rounded-lg shadow">
+    <div class="p-6 border-b">
+        <h2 class="text-lg font-semibold text-gray-800">Data Preview (first 5 rows)</h2>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr>
+                    {% for col in columns %}
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for row in preview_data %}
+                <tr class="hover:bg-gray-50">
+                    {% for col in columns %}
+                    <td class="px-4 py-3 text-gray-700 whitespace-nowrap">{{ row.get(col, '') }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

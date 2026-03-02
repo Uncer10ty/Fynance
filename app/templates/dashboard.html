@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Fynance{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+            <p class="text-gray-600">{{ current_month }} Overview</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <a href="?year={{ prev_year }}&month={{ prev_month }}{% if exclude_transfers %}&exclude_transfers=true{% endif %}" 
+               class="bg-white hover:bg-gray-100 text-gray-700 px-3 py-2 rounded-lg shadow transition-colors">
+                ← Prev
+            </a>
+            {% if not is_current_month %}
+            <a href="/?{% if exclude_transfers %}exclude_transfers=true{% endif %}" 
+               class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-2 rounded-lg shadow transition-colors">
+                Today
+            </a>
+            {% endif %}
+            <a href="?year={{ next_year }}&month={{ next_month }}{% if exclude_transfers %}&exclude_transfers=true{% endif %}" 
+               class="bg-white hover:bg-gray-100 text-gray-700 px-3 py-2 rounded-lg shadow transition-colors {% if is_current_month %}opacity-50 pointer-events-none{% endif %}">
+                Next →
+            </a>
+        </div>
+    </div>
+    <!-- Exclude transfers toggle -->
+    <div class="mt-3">
+        <a href="?year={{ year }}&month={{ month }}&exclude_transfers={% if exclude_transfers %}false{% else %}true{% endif %}" 
+           class="inline-flex items-center text-sm {% if exclude_transfers %}text-indigo-600 font-medium{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+            <span class="mr-2">{% if exclude_transfers %}☑{% else %}☐{% endif %}</span>
+            Exclude transfers from totals
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="card bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Total Spent</p>
+                <p class="text-2xl font-bold text-red-600">£{{ "%.2f"|format(summary.total_expenses) }}</p>
+            </div>
+            <div class="text-4xl">💸</div>
+        </div>
+    </div>
+    
+    <div class="card bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Total Income</p>
+                <p class="text-2xl font-bold text-green-600">£{{ "%.2f"|format(summary.total_income) }}</p>
+            </div>
+            <div class="text-4xl">💵</div>
+        </div>
+    </div>
+    
+    <div class="card bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Net</p>
+                <p class="text-2xl font-bold {% if summary.net >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    £{{ "%.2f"|format(summary.net) }}
+                </p>
+            </div>
+            <div class="text-4xl">📊</div>
+        </div>
+    </div>
+    
+    <div class="card bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-500 text-sm">Transactions</p>
+                <p class="text-2xl font-bold text-gray-800">{{ summary.transaction_count }}</p>
+            </div>
+            <div class="text-4xl">📝</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Category Breakdown -->
+    <div class="card bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Spending by Category</h2>
+        {% if summary.categories %}
+        <div class="flex items-center justify-center">
+            <canvas id="categoryChart" width="300" height="300"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <p class="text-4xl mb-2">📈</p>
+            <p>No spending data yet</p>
+            <a href="{{ url_for('imports.import_page') }}" class="text-indigo-600 hover:underline">Import a statement</a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Monthly Trend -->
+    <div class="card bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Monthly Spending Trend</h2>
+        {% if monthly_comparison %}
+        <canvas id="trendChart" height="200"></canvas>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <p class="text-4xl mb-2">📉</p>
+            <p>No trend data yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Category List & Recent Transactions -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Top Categories -->
+    <div class="card bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Top Spending Categories</h2>
+        {% if summary.categories %}
+        <div class="space-y-3">
+            {% for cat in summary.categories[:8] %}
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <span class="text-xl mr-3">{{ cat.icon }}</span>
+                    <span class="text-gray-700">{{ cat.name }}</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-gray-800 font-medium mr-4">£{{ "%.2f"|format(cat.amount) }}</span>
+                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                        <div class="h-2 rounded-full" style="width: {{ (cat.amount / summary.total_expenses * 100)|int }}%; background-color: {{ cat.color }};"></div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-4">No category data</p>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Transactions -->
+    <div class="card bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-800">Recent Transactions</h2>
+            <a href="{{ url_for('transactions.list_transactions') }}" class="text-indigo-600 hover:underline text-sm">View All</a>
+        </div>
+        {% if recent_transactions %}
+        <div class="space-y-3">
+            {% for tx in recent_transactions %}
+            <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div class="flex items-center">
+                    <span class="text-xl mr-3">{{ tx.category.icon if tx.category else '❓' }}</span>
+                    <div>
+                        <p class="text-gray-800 text-sm font-medium truncate" style="max-width: 200px;">{{ tx.description }}</p>
+                        <p class="text-gray-500 text-xs">{{ tx.date }}</p>
+                    </div>
+                </div>
+                <span class="{% if tx.amount < 0 %}text-red-600{% else %}text-green-600{% endif %} font-medium">
+                    £{{ "%.2f"|format(tx.amount|abs) }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-4">No transactions yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Accounts Overview -->
+{% if accounts %}
+<div class="mt-6">
+    <div class="card bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-800">Accounts</h2>
+            <a href="{{ url_for('accounts.new_account') }}" class="text-indigo-600 hover:underline text-sm">+ Add Account</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for account in accounts %}
+            <a href="{{ url_for('accounts.view_account', account_id=account.id) }}" 
+               class="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-gray-800">{{ account.name }}</p>
+                        <p class="text-gray-500 text-sm">{{ account.bank or 'Bank' }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold {% if account.balance >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                            £{{ "%.2f"|format(account.balance) }}
+                        </p>
+                        <p class="text-gray-500 text-xs">{{ account.transaction_count }} transactions</p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+{% if summary.categories %}
+// Category Pie Chart
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for cat in summary.categories %}'{{ cat.name }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for cat in summary.categories %}{{ cat.amount }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [{% for cat in summary.categories %}'{{ cat.color }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    boxWidth: 12,
+                    padding: 8,
+                    font: { size: 11 }
+                }
+            }
+        }
+    }
+});
+{% endif %}
+
+{% if monthly_comparison %}
+// Monthly Trend Chart
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for m in monthly_comparison %}monthNames[{{ m.month }} - 1] + ' {{ m.year }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Expenses',
+            data: [{% for m in monthly_comparison %}{{ m.expenses }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+            borderColor: 'rgb(239, 68, 68)',
+            borderWidth: 1
+        }, {
+            label: 'Income',
+            data: [{% for m in monthly_comparison %}{{ m.income }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: 'rgba(34, 197, 94, 0.7)',
+            borderColor: 'rgb(34, 197, 94)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '£' + value;
+                    }
+                }
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

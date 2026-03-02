@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Fynance{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .nav-link { transition: all 0.2s; }
+        .nav-link:hover { background-color: rgba(255,255,255,0.1); }
+        .nav-link.active { background-color: rgba(255,255,255,0.2); }
+        .card { transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-indigo-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="{{ url_for('main.dashboard') }}" class="text-xl font-bold flex items-center">
+                        <span class="text-2xl mr-2">💰</span> Fynance
+                    </a>
+                    <div class="hidden md:flex space-x-1">
+                        <a href="{{ url_for('main.dashboard') }}" 
+                           class="nav-link px-3 py-2 rounded-md text-sm font-medium {% if request.endpoint == 'main.dashboard' %}active{% endif %}">
+                            Dashboard
+                        </a>
+                        <a href="{{ url_for('transactions.list_transactions') }}" 
+                           class="nav-link px-3 py-2 rounded-md text-sm font-medium {% if 'transactions' in request.endpoint %}active{% endif %}">
+                            Transactions
+                        </a>
+                        <a href="{{ url_for('accounts.list_accounts') }}" 
+                           class="nav-link px-3 py-2 rounded-md text-sm font-medium {% if 'accounts' in request.endpoint %}active{% endif %}">
+                            Accounts
+                        </a>
+                        <a href="{{ url_for('categories.list_categories') }}" 
+                           class="nav-link px-3 py-2 rounded-md text-sm font-medium {% if 'categories' in request.endpoint %}active{% endif %}">
+                            Categories
+                        </a>
+                        <a href="{{ url_for('imports.import_page') }}" 
+                           class="nav-link px-3 py-2 rounded-md text-sm font-medium {% if 'imports' in request.endpoint %}active{% endif %}">
+                            Import
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if uncategorized_count is defined and uncategorized_count > 0 %}
+                    <a href="{{ url_for('transactions.review') }}" 
+                       class="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                        <span class="mr-1">⚠️</span> {{ uncategorized_count }} to review
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 mt-4">
+            {% for category, message in messages %}
+            <div class="{% if category == 'error' %}bg-red-100 border-red-500 text-red-700{% elif category == 'success' %}bg-green-100 border-green-500 text-green-700{% else %}bg-blue-100 border-blue-500 text-blue-700{% endif %} border-l-4 p-4 mb-4 rounded" role="alert">
+                <p>{{ message }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-gray-600 text-sm">
+            Fynance - Personal Finance Tracker
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

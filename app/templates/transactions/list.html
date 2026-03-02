@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - Fynance{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Transactions</h1>
+    <a href="{{ url_for('transactions.review') }}" 
+       class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+        Review Uncategorized
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="bg-white rounded-lg shadow p-4 mb-6">
+    <form method="GET" class="flex flex-wrap items-center gap-4">
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Account</label>
+            <select name="account_id" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <option value="">All Accounts</option>
+                {% for account in accounts %}
+                <option value="{{ account.id }}" {% if filters.account_id == account.id %}selected{% endif %}>
+                    {{ account.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Category</label>
+            <select name="category_id" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if filters.category_id == category.id %}selected{% endif %}>
+                    {{ category.icon }} {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Search</label>
+            <input type="text" name="search" value="{{ filters.search or '' }}"
+                   placeholder="Search description..."
+                   class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+        </div>
+        
+        <div class="pt-5">
+            <button type="submit" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                Filter
+            </button>
+            <a href="{{ url_for('transactions.list_transactions') }}" 
+               class="ml-2 text-gray-600 hover:text-gray-800 text-sm">Clear</a>
+        </div>
+    </form>
+</div>
+
+<!-- Transactions Table -->
+<div class="bg-white rounded-lg shadow">
+    {% if transactions %}
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for tx in transactions %}
+                <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ url_for('transactions.view_transaction', transaction_id=tx.id, account_id=filters.account_id, category_id=filters.category_id, year=filters.year, month=filters.month, search=filters.search) }}'">
+                    <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ tx.date.strftime('%d %b %Y') }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ tx.account.name }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-800 max-w-xs truncate">{{ tx.description }}</td>
+                    <td class="px-6 py-4">
+                        {% if tx.category %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                              style="background-color: {{ tx.category.color }}20; color: {{ tx.category.color }};">
+                            {{ tx.category.icon }} {{ tx.category.name }}
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            ❓ Uncategorized
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right font-medium whitespace-nowrap {% if tx.amount < 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                        {% if tx.amount < 0 %}-{% else %}+{% endif %}£{{ "%.2f"|format(tx.amount|abs) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="p-4 border-t text-sm text-gray-500">
+        Showing {{ transactions|length }} transactions
+    </div>
+    {% else %}
+    <div class="p-12 text-center">
+        <div class="text-6xl mb-4">📭</div>
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">No Transactions Found</h2>
+        <p class="text-gray-600 mb-4">
+            {% if filters.search or filters.category_id or filters.account_id %}
+            Try adjusting your filters
+            {% else %}
+            Import a bank statement to get started
+            {% endif %}
+        </p>
+        <a href="{{ url_for('imports.import_page') }}" 
+           class="text-indigo-600 hover:underline">Import Statement</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

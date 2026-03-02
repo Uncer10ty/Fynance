@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Accounts - Fynance{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Accounts</h1>
+    <a href="{{ url_for('accounts.new_account') }}" 
+       class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+        + Add Account
+    </a>
+</div>
+
+{% if accounts %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for account in accounts %}
+    <div class="card bg-white rounded-lg shadow p-6">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800">{{ account.name }}</h2>
+                <p class="text-gray-500">{{ account.bank or 'Bank Account' }}</p>
+            </div>
+            <span class="text-3xl">🏦</span>
+        </div>
+        
+        <div class="mb-4">
+            <p class="text-gray-500 text-sm">Current Balance</p>
+            <p class="text-2xl font-bold {% if account.balance >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                £{{ "%.2f"|format(account.balance) }}
+            </p>
+        </div>
+        
+        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+            <span>{{ account.transaction_count }} transactions</span>
+            <span>{{ account.currency }}</span>
+        </div>
+        
+        <div class="flex space-x-2">
+            <a href="{{ url_for('accounts.view_account', account_id=account.id) }}" 
+               class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-center transition-colors">
+                View
+            </a>
+            <a href="{{ url_for('imports.import_page') }}?account_id={{ account.id }}" 
+               class="flex-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded-lg text-center transition-colors">
+                Import
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-lg shadow p-12 text-center">
+    <div class="text-6xl mb-4">🏦</div>
+    <h2 class="text-2xl font-semibold text-gray-800 mb-2">No Accounts Yet</h2>
+    <p class="text-gray-600 mb-6">Add your first bank account to start tracking your finances.</p>
+    <a href="{{ url_for('accounts.new_account') }}" 
+       class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-block">
+        + Add Your First Account
+    </a>
+</div>
+{% endif %}
+{% endblock %}

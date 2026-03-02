@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}New Account - Fynance{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="mb-6">
+        <a href="{{ url_for('accounts.list_accounts') }}" class="text-indigo-600 hover:underline">← Back to Accounts</a>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Add New Account</h1>
+        
+        <form method="POST" class="space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Account Name *</label>
+                <input type="text" id="name" name="name" required
+                       placeholder="e.g., Main Current Account"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            
+            <div>
+                <label for="bank" class="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
+                <select id="bank" name="bank" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select a bank...</option>
+                    <option value="Barclays">Barclays</option>
+                    <option value="HSBC">HSBC</option>
+                    <option value="Lloyds">Lloyds</option>
+                    <option value="NatWest">NatWest</option>
+                    <option value="Nationwide">Nationwide</option>
+                    <option value="Santander">Santander</option>
+                    <option value="Halifax">Halifax</option>
+                    <option value="TSB">TSB</option>
+                    <option value="Monzo">Monzo</option>
+                    <option value="Starling">Starling</option>
+                    <option value="Revolut">Revolut</option>
+                    <option value="Trading 212">Trading 212</option>
+                    <option value="Capital One">Capital One</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="account_number" class="block text-sm font-medium text-gray-700 mb-1">Account Number (Last 4 digits)</label>
+                <input type="text" id="account_number" name="account_number" maxlength="4"
+                       placeholder="e.g., 1234"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <p class="text-xs text-gray-500 mt-1">Optional - helps identify the account</p>
+            </div>
+            
+            <div>
+                <label for="currency" class="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                <select id="currency" name="currency" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="GBP" selected>GBP (£)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="USD">USD ($)</option>
+                </select>
+            </div>
+            
+            <div class="pt-4">
+                <button type="submit" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                    Create Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

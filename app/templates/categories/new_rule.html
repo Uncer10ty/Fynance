@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}New Rule - Fynance{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="mb-6">
+        <a href="{{ url_for('categories.list_rules') }}" class="text-indigo-600 hover:underline">← Back to Rules</a>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Add Categorization Rule</h1>
+        
+        <form method="POST" class="space-y-4">
+            <div>
+                <label for="pattern" class="block text-sm font-medium text-gray-700 mb-1">Pattern *</label>
+                <input type="text" id="pattern" name="pattern" required
+                       placeholder="e.g., TESCO or AMAZON"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <p class="text-xs text-gray-500 mt-1">Transaction descriptions containing this text will be categorized</p>
+            </div>
+            
+            <div>
+                <label for="category_id" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <select id="category_id" name="category_id" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">Select a category...</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.icon }} {{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="flex items-center">
+                <input type="checkbox" id="is_regex" name="is_regex" value="true"
+                       class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <label for="is_regex" class="ml-2 text-sm text-gray-700">Use as regular expression (advanced)</label>
+            </div>
+            
+            <div class="pt-4">
+                <button type="submit" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                    Create Rule
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

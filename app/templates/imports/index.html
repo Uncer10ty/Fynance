@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Import Statement - Fynance{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Import Bank Statement</h1>
+    <p class="text-gray-600">Upload a CSV or Excel file from your bank</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Upload Form -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Upload Statement</h2>
+            
+            {% if accounts %}
+            <form method="POST" action="{{ url_for('imports.upload_file') }}" enctype="multipart/form-data" class="space-y-4">
+                <div>
+                    <label for="account_id" class="block text-sm font-medium text-gray-700 mb-1">Select Account *</label>
+                    <select id="account_id" name="account_id" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Choose an account...</option>
+                        {% for account in accounts %}
+                        <option value="{{ account.id }}" {% if request.args.get('account_id')|int == account.id %}selected{% endif %}>
+                            {{ account.name }} {% if account.bank %}({{ account.bank }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Statement File *</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-indigo-400 transition-colors">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="file" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none">
+                                    <span>Upload a file</span>
+                                    <input id="file" name="file" type="file" accept=".csv,.xlsx,.xls" class="sr-only" required>
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">CSV or Excel up to 16MB</p>
+                        </div>
+                    </div>
+                    <p id="file-name" class="text-sm text-gray-600 mt-2"></p>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" 
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                        Upload & Preview
+                    </button>
+                </div>
+            </form>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="text-4xl mb-4">🏦</div>
+                <p class="text-gray-600 mb-4">You need to create an account first</p>
+                <a href="{{ url_for('accounts.new_account') }}" 
+                   class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-block">
+                    Create Account
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Supported Banks -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Supported Formats</h2>
+            <p class="text-gray-600 text-sm mb-4">We auto-detect formats from most UK banks:</p>
+            <ul class="space-y-2 text-sm">
+                <li class="flex items-center text-gray-700">
+                    <span class="text-green-500 mr-2">✓</span> Barclays
+                </li>
+                <li class="flex items-center text-gray-700">
+                    <span class="text-green-500 mr-2">✓</span> HSBC
+                </li>
+                <li class="flex items-center text-gray-700">
+                    <span class="text-green-500 mr-2">✓</span> Lloyds
+                </li>
+                <li class="flex items-center text-gray-700">
+                    <span class="text-green-500 mr-2">✓</span> Nationwide
+                </li>
+                <li class="flex items-center text-gray-700">
+                    <span class="text-green-500 mr-2">✓</span> NatWest / RBS
+                </li>
+                <li class="flex items-center text-gray-700">
+                    <span class="text-green-500 mr-2">✓</span> Monzo
+                </li>
+                <li class="flex items-center text-gray-700">
+                    <span class="text-green-500 mr-2">✓</span> Starling
+                </li>
+                <li class="flex items-center text-gray-700">
+                    <span class="text-green-500 mr-2">✓</span> Other CSV/Excel
+                </li>
+            </ul>
+            <p class="text-xs text-gray-500 mt-4">You can manually map columns if auto-detection doesn't work.</p>
+        </div>
+        
+        {% if recent_imports %}
+        <div class="bg-white rounded-lg shadow p-6 mt-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Recent Imports</h2>
+            <div class="space-y-3">
+                {% for imp in recent_imports[:5] %}
+                <div class="text-sm">
+                    <p class="text-gray-800 truncate">{{ imp.filename }}</p>
+                    <p class="text-gray-500 text-xs">
+                        {{ imp.imported_at.strftime('%d %b %Y') }} • {{ imp.transaction_count }} transactions
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{{ url_for('imports.import_history') }}" class="text-indigo-600 hover:underline text-sm mt-4 inline-block">
+                View all imports →
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Display selected filename
+document.getElementById('file').addEventListener('change', function(e) {
+    const fileName = e.target.files[0]?.name || '';
+    document.getElementById('file-name').textContent = fileName ? `Selected: ${fileName}` : '';
+});
+</script>
+{% endblock %}
