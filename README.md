@@ -91,10 +91,6 @@ There are no automated tests included yet. To test manually:
 python run.py
 ```
 
-## Contributing
-- Fork the repo, create a feature branch, and open a PR describing the change.
-- Prefer small, focused commits and include any necessary migration or setup steps.
-
 ## Troubleshooting
 - If the server fails to start, check `config.py` for invalid settings.
 - Ensure required packages are installed from `requirements.txt`.
@@ -104,6 +100,3 @@ python run.py
 - Persist data with a database and migrations
 - Dockerfile + docker-compose for reproducible local development
 - Add user authentication and multi-user support
-
-----
-If you'd like, I can also add a minimal `README` badge, example screenshots, or a `Makefile`/`docker-compose` for local setup.
